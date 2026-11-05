@@ -1,0 +1,245 @@
+---
+title: Configuration
+description: Customize LambShock for your environment and workflow. Learn how to use config files, environment variables, and runtime settings.
+---
+
+## Overview
+
+LambShock uses layered configuration so you can adapt the same project to local development, staging, and production. You can keep safe defaults in a config file, override sensitive values with environment variables, and adjust runtime behavior per deployment.
+
+This page is a starter kit template. Use it as a baseline and replace the sample values with the settings that fit your own environment.
+
+<Callout kind="info">
+
+Keep secrets out of source control. Store credentials in environment variables or a secrets manager, not in committed config files.
+
+</Callout>
+
+## Configuration Sources
+
+LambShock reads settings from multiple sources so you can separate code, defaults, and environment-specific values.
+
+<Columns cols={3}>
+  <Card title="Config file" icon="book-open" href="#configuration-file">
+  
+  Keep shared defaults in a versioned file that your team can review.
+  
+  </Card>
+  <Card title="Environment variables" icon="settings" href="#environment-variables">
+  
+  Override values per machine, container, or deployment without changing code.
+  
+  </Card>
+  <Card title="Feature flags" icon="zap" href="#feature-flags">
+  
+  Turn capabilities on or off without redeploying the application.
+  
+  </Card>
+</Columns>
+
+### Precedence
+
+When the same setting appears in more than one place, LambShock should follow a predictable order:
+
+1. Runtime overrides
+2. Environment variables
+3. Configuration file
+4. Built-in defaults
+
+This model lets you keep a safe default profile while still supporting deployment-specific changes.
+
+## Getting Started
+
+<Steps>
+  <Step title="Create a configuration file" icon="download">
+  
+  Add a file such as `lambshock.config.json` to your project root and commit the non-sensitive defaults.
+  
+  </Step>
+  <Step title="Set environment variables" icon="settings">
+  
+  Provide environment-specific values like database URLs, API endpoints, and feature flags.
+  
+  </Step>
+  <Step title="Start the service" icon="play-circle">
+  
+  Run LambShock with the configuration that matches your current environment.
+  
+  </Step>
+  <Step title="Verify the result" icon="check-circle">
+  
+  Confirm that the application reads the expected values before you promote changes to production.
+  
+  </Step>
+</Steps>
+
+## Configuration File
+
+A config file works well for defaults that apply across many environments. Use it for values that are safe to share, such as retry counts, timeouts, and enabled integrations.
+
+```json
+{
+  "appName": "LambShock",
+  "server": {
+    "port": 8080,
+    "host": "0.0.0.0",
+    "requestTimeoutMs": 15000
+  },
+  "logging": {
+    "level": "info",
+    "format": "json"
+  },
+  "features": {
+    "experimentalUi": false,
+    "batchProcessing": true
+  }
+}
+```
+
+You can keep the file simple at first and expand it as your deployment needs grow. If you add new sections later, group related values together so they remain easy to scan.
+
+## Environment Variables
+
+Use environment variables for values that vary by machine or deployment. This is the safest place for credentials, service endpoints, and one-off overrides.
+
+<CodeGroup tabs="JSON,Shell">
+  ```json
+  {
+    "databaseUrl": "${DATABASE_URL}",
+    "cacheUrl": "${CACHE_URL}",
+    "logLevel": "${LOG_LEVEL}"
+  }
+  ```
+  ```bash
+  export DATABASE_URL="postgres://lambshock_user:password@localhost:5432/lambshock"
+  export CACHE_URL="redis://localhost:6379"
+  export LOG_LEVEL="debug"
+  ```
+</CodeGroup>
+
+### Recommended naming
+
+Use uppercase names with underscores for environment variables. For example, `DATABASE_URL`, `LOG_LEVEL`, and `FEATURE_EXPERIMENTAL_UI` are easy to recognize and consistent across shells and deployment tools.
+
+<Callout kind="tip">
+
+If you deploy to containers or serverless platforms, prefer environment variables for values that change between staging and production.
+
+</Callout>
+
+## Deployment-Specific Configuration
+
+Different environments often need different defaults. Use separate files or overlays for local development, test, staging, and production.
+
+<Tabs>
+  <Tab title="Development" icon="terminal">
+  
+  ```json
+  {
+    "server": {
+      "port": 8080
+    },
+    "logging": {
+      "level": "debug"
+    }
+  }
+  ```
+  
+  Use verbose logs and shorter timeouts so you can iterate quickly.
+  
+  </Tab>
+  <Tab title="Staging" icon="monitor">
+  
+  ```json
+  {
+    "server": {
+      "port": 8080,
+      "requestTimeoutMs": 20000
+    },
+    "logging": {
+      "level": "info"
+    }
+  }
+  ```
+  
+  Match production-like behavior while keeping traceability for testing.
+  
+  </Tab>
+  <Tab title="Production" icon="shield">
+  
+  ```json
+  {
+    "server": {
+      "port": 8080,
+      "requestTimeoutMs": 30000
+    },
+    "logging": {
+      "level": "warn"
+    }
+  }
+  ```
+  
+  Keep production output concise and stable, and route deeper diagnostics to your observability tools.
+  
+  </Tab>
+</Tabs>
+
+## Feature Flags
+
+Feature flags let you ship code safely and enable it only when you are ready. Use them for staged rollouts, beta functionality, and risk reduction.
+
+```javascript
+const config = {
+  features: {
+    experimentalUi: process.env.FEATURE_EXPERIMENTAL_UI === "true",
+    batchProcessing: process.env.FEATURE_BATCH_PROCESSING !== "false",
+  },
+};
+
+if (config.features.experimentalUi) {
+  enableExperimentalUi();
+}
+```
+
+This pattern keeps your deployment flexible without requiring a new build for every toggle change.
+
+## Default Settings
+
+Default settings should make the application work out of the box. Choose sensible values that support local development and do not surprise new users.
+
+| Setting | Sample default | Why it matters |
+|--------|----------------|----------------|
+| `server.port` | `8080` | Common local port that avoids privileged access |
+| `logging.level` | `info` | Balanced detail for normal operation |
+| `requestTimeoutMs` | `15000` | Prevents hanging requests from consuming resources |
+| `features.batchProcessing` | `true` | Enables efficient processing for larger workloads |
+
+## Validation and Troubleshooting
+
+If LambShock does not start as expected, check the following:
+
+- The config file exists and is valid JSON.
+- Required environment variables are present.
+- Deployment overrides do not conflict with local defaults.
+- Feature flag values are set to the intended boolean strings.
+
+<Expandable title="Common mistakes" default-open="false">
+
+You can usually fix configuration issues by checking value types, quoting strings correctly, and confirming that your runtime environment matches your intended deployment.
+
+- Use numbers for numeric fields like `8080`.
+- Use strings for text values like `"info"`.
+- Use `true` and `false` for booleans.
+- Keep secret values out of the repository.
+
+</Expandable>
+
+<Expandable title="Suggested next step" default-open="false">
+
+After you establish a working baseline, document your own environment-specific overrides and add a checklist for staging and production releases.
+
+</Expandable>
+
+## Summary
+
+You now have a practical starting point for configuring LambShock across environments. Begin with safe defaults, override them with environment variables where needed, and keep deployment-specific settings isolated so you can change them without risk.

@@ -1,0 +1,192 @@
+---
+title: Changelog
+description: Review recent releases, improvements, and fixes for LambShock. Keep track of what changed across the latest versions.
+---
+
+## Overview
+
+Use this changelog to review recent releases, new features, bug fixes, and breaking changes for LambShock. This page is a starter kit template, so you can tailor the entries, dates, and examples to match your own release process.
+
+If you publish regularly, keep the newest release at the top and summarize the impact in plain language. For teams with multiple environments, this page also helps you track when a change was shipped, what it improved, and whether it requires follow-up work.
+
+<Callout kind="tip">
+  This is sample documentation for LambShock. Replace the release notes, dates, and examples with your own project details.
+</Callout>
+
+## Recent Releases
+
+<Update label="2026-11-05" description="v1.4.0" tags={["feature", "improvement"]}>
+
+## New Features
+
+- Added release note grouping so you can scan changes by category.
+- Introduced a streamlined deployment summary for faster reviews.
+- Added support for richer status indicators in build summaries.
+
+## Improvements
+
+- Reduced manual formatting work for changelog entries.
+- Improved readability on smaller screens.
+- Clarified version labels and section headings for release review.
+
+## Bug Fixes
+
+- Fixed inconsistent spacing in long entries.
+- Resolved an issue where category labels could wrap awkwardly.
+- Corrected a missing link style in release summaries.
+
+</Update>
+
+<Update label="2026-10-18" description="v1.3.2" tags={["bugfix", "improvement"]}>
+
+## Improvements
+
+- Updated the default release template to make edits quicker.
+- Improved compatibility with common markdown workflows.
+- Refined the visual spacing around nested lists and headings.
+
+## Bug Fixes
+
+- Fixed a display issue in bullet lists inside update entries.
+- Resolved a problem where date labels could appear out of order.
+- Corrected inconsistent rendering for inline code examples.
+
+</Update>
+
+<Update label="2026-09-30" description="v1.3.0" tags={["breaking", "feature"]}>
+
+## Breaking Changes
+
+- Standardized release note formatting so every entry uses the same heading structure.
+- Updated template guidance to prefer concise summaries over long paragraphs.
+
+## New Features
+
+- Added support for version history summaries at the top of the page.
+- Improved release tracking for recent changes and follow-up tasks.
+
+## Bug Fixes
+
+- Fixed a typo in the starter template.
+- Resolved a formatting issue that affected older markdown files.
+
+</Update>
+
+## What Changed Most Recently
+
+The newest release focuses on making changelog maintenance easier. You can now group changes more clearly, highlight the most important updates first, and keep your release notes consistent across versions.
+
+For teams that move quickly, this format helps you answer three questions at a glance: what changed, why it matters, and whether anything requires action.
+
+## How to Use This Template
+
+<Steps>
+  <Step title="Pick a release date" icon="calendar">
+  
+  Use the date that you published the release, then keep entries in reverse chronological order.
+  
+  </Step>
+  <Step title="Summarize the release" icon="book-open">
+  
+  Write a short overview that explains the release in one or two sentences.
+  
+  </Step>
+  <Step title="Group the changes" icon="list">
+  
+  Separate new features, improvements, bug fixes, and breaking changes so readers can scan quickly.
+  
+  </Step>
+  <Step title="Link follow-up work" icon="arrow-right">
+  
+  Add internal links or notes when a release requires migration, testing, or configuration changes.
+  
+  </Step>
+</Steps>
+
+## Release Categories
+
+<Columns cols={3}>
+  <Card title="New Features" icon="zap" href="/quickstart">
+  
+  Use this section for additions that users can try immediately.
+  
+  </Card>
+  <Card title="Bug Fixes" icon="check-circle" href="/authentication">
+  
+  Use this section for issues that you resolved in the current release.
+  
+  </Card>
+  <Card title="Breaking Changes" icon="alert-triangle" href="/introduction">
+  
+  Use this section for changes that may require user action.
+  
+  </Card>
+</Columns>
+
+## Format Examples
+
+<CodeGroup tabs="Markdown,JSON">
+  ```markdown
+  <Update label="2026-11-05" description="v1.4.0" tags={["feature", "improvement"]}>
+
+  ## New Features
+
+  - Added release note grouping.
+  - Improved deployment summaries.
+
+  ## Bug Fixes
+
+  - Fixed list spacing.
+  - Corrected label wrapping.
+
+  </Update>
+  ```
+
+  ```json
+  {
+    "label": "2026-11-05",
+    "description": "v1.4.0",
+    "tags": ["feature", "improvement"]
+  }
+  ```
+</CodeGroup>
+
+## Best Practices
+
+<Tabs>
+  <Tab title="Keep It Concise" icon="file-text">
+  
+  Write short bullets that explain the user impact. Avoid repeating the same point across multiple sections.
+  
+  </Tab>
+  <Tab title="Use Clear Labels" icon="tag">
+  
+  Use consistent release labels such as `v1.4.0` and keep dates in `YYYY-MM-DD` format.
+  
+  </Tab>
+  <Tab title="Review Before Publishing" icon="shield">
+  
+  Check for missing dates, accidental duplicates, and changes that may require migration notes.
+  
+  </Tab>
+</Tabs>
+
+## Optional Notes
+
+<Callout kind="info">
+  If your release includes a migration step, call it out clearly and place it near the top of the entry so readers do not miss it.
+</Callout>
+
+<Expandable title="What should you include in each release?" default-open="false">
+
+Include the changes that affect users the most. A good entry usually contains a short summary, a few bullets for the main updates, and a note about any breaking change.
+
+You can also add references to related pages, testing notes, or rollout details if your team needs that extra context.
+
+</Expandable>
+
+## Version History Guidance
+
+Keep the latest version first, then work backward through earlier releases. That order helps readers find the newest changes without scanning the whole page.
+
+When you maintain multiple versions, use one update block per release and keep the structure consistent. That makes the page easier to read and easier to maintain over time.

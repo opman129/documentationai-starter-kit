@@ -1,0 +1,181 @@
+---
+title: Quickstart
+description: Set up LambShock and complete your first successful workflow in minutes. This guide focuses on the fastest path from zero to working setup.
+---
+
+## Overview
+
+LambShock helps you move from an empty workspace to a working setup quickly. This starter kit shows the shortest path through prerequisites, setup, first project creation, verification, and a basic workflow you can repeat and customize.
+
+<Callout kind="info">
+
+This page is a starter kit template. Replace the sample names, endpoints, and workflow steps with details from your own product.
+
+</Callout>
+
+## Prerequisites
+
+Before you begin, make sure you have the basics ready:
+
+- An account or access to your LambShock workspace
+- A recent version of Node.js or another supported runtime
+- Permission to create projects and run test workflows
+- A terminal and text editor available locally
+
+<Columns cols={3}>
+  <Card title="Create Access" icon="users" href="#setup">
+    
+  Start with a workspace or account that has project permissions.
+    
+  </Card>
+  <Card title="Prepare Tools" icon="terminal" href="#installation">
+    
+  Install the runtime and command-line tools you will use locally.
+    
+  </Card>
+  <Card title="Verify Output" icon="check-circle" href="#verification">
+    
+  Confirm that your first run completes without errors.
+    
+  </Card>
+</Columns>
+
+## Setup
+
+### Installation
+
+Use the package manager that matches your environment. The commands below are realistic examples you can adapt for your own distribution.
+
+<CodeGroup tabs="npm,yarn,pnpm">
+  ```javascript
+  // package.json
+  {
+    "name": "lambshock-starter",
+    "private": true,
+    "scripts": {
+      "start": "node index.js",
+      "check": "node verify.js"
+    },
+    "dependencies": {
+      "axios": "^1.7.7"
+    }
+  }
+  ```
+  ```bash
+  yarn install
+  ```
+  ```bash
+  pnpm install
+  ```
+</CodeGroup>
+
+### First project setup
+
+Complete your first project setup by creating a config file and adding a simple workflow definition.
+
+<Steps>
+  <Step title="Create a project folder" icon="folder">
+
+  Create a new directory, open it in your editor, and add a config file named `lambshock.config.json`.
+
+  </Step>
+  <Step title="Add environment values" icon="settings">
+
+  Store your local values in a safe place. For example, use `LAMBSHOCK_PROJECT_ID` and `LAMBSHOCK_API_URL` as environment variables.
+
+  </Step>
+  <Step title="Register your workflow" icon="check-circle">
+
+  Define the first workflow in a JSON file so you can run and verify it immediately.
+
+  </Step>
+</Steps>
+
+## Your first workflow
+
+The following example shows a minimal workflow that sends a request, checks the response, and writes a simple success message. Use it as a template for your own process.
+
+```javascript
+import axios from "axios";
+
+async function runWorkflow() {
+  const response = await axios.post("https://api.example.com/workflows/run", {
+    projectId: "proj_1024",
+    source: "quickstart",
+    dryRun: false
+  });
+
+  if (response.status === 200) {
+    console.log("Workflow completed successfully");
+  } else {
+    console.error("Workflow failed", response.status);
+  }
+}
+
+runWorkflow().catch((error) => {
+  console.error("Unexpected error", error.message);
+});
+```
+
+<Tabs>
+  <Tab title="Local" icon="terminal">
+
+  Run the workflow from your computer while you are testing the setup.
+
+  ```bash
+  node index.js
+  ```
+
+  </Tab>
+  <Tab title="Staging" icon="cloud">
+
+  Use a staging environment to confirm that your workflow reaches your backend safely.
+
+  ```bash
+  npm run check
+  ```
+
+  </Tab>
+  <Tab title="Production" icon="rocket">
+
+  After verification, connect the same workflow to your production settings.
+
+  ```bash
+  node index.js --env production
+  ```
+
+  </Tab>
+</Tabs>
+
+## Verification
+
+Use the checklist below to confirm that your setup is working as expected.
+
+1. Your project file exists and loads without syntax errors.
+2. The workflow request returns a successful HTTP response.
+3. Your console shows the confirmation message.
+4. The environment values resolve correctly in your shell.
+5. You can repeat the run without changing the setup.
+
+<Callout kind="tip">
+
+If the request fails, check the endpoint URL, project identifier, and local environment values before you retry.
+
+</Callout>
+
+## Next steps
+
+Once the quickstart works, expand the same pattern into your real project. You can add more validation, route results to another service, or split the workflow into smaller steps.
+
+<Columns cols={2}>
+  <Card title="Configuration" icon="settings" href="/configuration" horizontal>
+    
+  Learn how to customize LambShock settings for different environments.
+    
+  </Card>
+  <Card title="Authentication" icon="lock" href="/authentication" horizontal>
+    
+  Set up secure access and manage tokens or API keys.
+    
+  </Card>
+</Columns>

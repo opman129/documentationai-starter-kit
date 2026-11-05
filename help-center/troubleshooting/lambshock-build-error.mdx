@@ -1,0 +1,29 @@
+---
+title: Build Fails With Module Error
+description: How to fix LambShock module resolution errors.
+---
+
+## Symptoms
+
+- `Module not found: Can't resolve 'lambshock'`
+- Build aborts or fails
+
+## Causes
+
+- Missing installation
+- Wrong import path
+
+## Solution
+
+<Steps>
+  <Step title="Install LambShock">
+    ````bash
+    npm install lambshock
+    ````
+  </Step>
+  <Step title="Check import">
+    ````js
+    import { LambShock } from 'lambshock';
+    ````
+  </Step>
+</Steps>

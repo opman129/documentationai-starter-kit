@@ -1,0 +1,186 @@
+---
+title: Authentication
+description: Configure secure access for users, apps, or API clients. This page explains the supported auth methods and how to apply them correctly.
+---
+
+## Overview
+
+LambShock supports multiple authentication patterns so you can protect APIs, web apps, and background jobs with the right level of access. Use API keys for server-to-server requests, OAuth for delegated user access, and session-based authentication for browser flows.
+
+This starter kit page gives you a practical baseline. Adapt the examples to match your own identity provider, token format, and permission model.
+
+<Callout kind="info">
+
+Keep secrets out of source control. Store credentials in environment variables or a managed secret store, not in your app code.
+
+</Callout>
+
+## Authentication methods
+
+Use the method that matches your client type and trust boundary. Server-side apps usually use API keys or service tokens, while user-facing apps often use OAuth or session cookies.
+
+<Columns cols={3}>
+  <Card title="API Keys" icon="lock" href="#api-keys">
+    
+    Best for machine-to-machine access and simple service integration.
+    
+  </Card>
+  <Card title="OAuth" icon="users" href="#oauth-and-sessions">
+    
+    Best for delegated user access with consent and scoped permissions.
+    
+  </Card>
+  <Card title="Permissions" icon="shield" href="#permissions-and-scopes">
+    
+    Best for limiting what each token can read or change.
+    
+  </Card>
+</Columns>
+
+### API keys
+
+API keys identify your application when you make requests from a trusted backend. Send the key in a header, not in the URL, and rotate it regularly.
+
+### OAuth and sessions
+
+OAuth lets users authorize access without sharing their password. Session authentication is common in browser apps where the server stores the login state and the client sends a cookie automatically.
+
+## Implementation examples
+
+The following examples show a typical request pattern for each approach. Replace endpoint paths and claims with the values used in your own system.
+
+<CodeGroup tabs="JavaScript,Python,cURL">
+  ```javascript
+  const response = await fetch("https://api.example.com/v1/account", {
+    headers: {
+      Authorization: "Bearer YOUR_API_KEY",
+      "Content-Type": "application/json"
+    }
+  });
+
+  const data = await response.json();
+  console.log(data);
+  ```
+  ```python
+  import requests
+
+  response = requests.get(
+      "https://api.example.com/v1/account",
+      headers={
+          "Authorization": "Bearer YOUR_API_KEY",
+          "Content-Type": "application/json"
+      },
+      timeout=30
+  )
+
+  print(response.json())
+  ```
+  ```bash
+  curl https://api.example.com/v1/account \
+    -H "Authorization: Bearer YOUR_API_KEY" \
+    -H "Content-Type: application/json"
+  ```
+</CodeGroup>
+
+<Steps>
+  <Step title="Create credentials" icon="download">
+    
+    Create a dedicated API key or OAuth client for each environment, such as development, staging, and production.
+    
+  </Step>
+  <Step title="Store secrets securely" icon="settings">
+    
+    Save the credential in an environment variable like `LAMBSHOCK_API_KEY` or in your deployment platform's secret manager.
+    
+  </Step>
+  <Step title="Attach the token to requests" icon="code">
+    
+    Add an `Authorization` header with the correct scheme for your auth method, such as `Bearer YOUR_API_KEY`.
+    
+  </Step>
+  <Step title="Verify access" icon="check-circle">
+    
+    Confirm that the request succeeds, then test a denied request to make sure your permission rules work as expected.
+    
+  </Step>
+</Steps>
+
+## Permissions and scopes
+
+Scopes define what a token can do. Use narrow scopes for production and broader scopes only in controlled environments.
+
+| Scope | Typical access | Example use |
+|------|----------------|-------------|
+| `read:account` | View profile and account data | Display dashboard details |
+| `write:account` | Update account data | Save profile changes |
+| `read:billing` | View billing information | Show invoices |
+| `admin:users` | Manage users and roles | Invite teammates |
+
+A token with `read:account` should not be able to modify records. If you need a broader permission, create a separate token instead of expanding every key.
+
+## Environment variables
+
+Environment variables help you keep credentials out of code and make deployment easier across environments.
+
+<CodeGroup tabs="macOS/Linux,Windows">
+  ```bash
+  export LAMBSHOCK_API_KEY="YOUR_API_KEY"
+  export LAMBSHOCK_AUTH_URL="https://auth.example.com"
+  ```
+  ```powershell
+  setx LAMBSHOCK_API_KEY "YOUR_API_KEY"
+  setx LAMBSHOCK_AUTH_URL "https://auth.example.com"
+  ```
+</CodeGroup>
+
+## Security best practices
+
+<Callout kind="alert">
+
+Never log raw secrets, never commit credentials to a repository, and never expose long-lived tokens in browser code.
+
+</Callout>
+
+- Use short-lived tokens when possible.
+- Rotate credentials on a fixed schedule.
+- Separate keys by environment and service.
+- Enforce the minimum scope needed for each client.
+- Revoke unused credentials immediately.
+- Audit failed login attempts and unusual token use.
+
+## Advanced scenarios
+
+<ExpandableGroup>
+  <Expandable title="Using session cookies in a browser app" default-open="true">
+
+    If you use sessions, mark cookies as `HttpOnly`, `Secure`, and `SameSite=Lax` or stricter. This helps reduce exposure to client-side scripts and cross-site attacks.
+
+  </Expandable>
+  <Expandable title="Mixing OAuth with backend API calls" default-open="false">
+
+    Let the browser obtain a user token, then pass that token to your backend only when the backend must act on behalf of the user. Keep service credentials separate from user credentials.
+
+  </Expandable>
+  <Expandable title="Handling expired credentials" default-open="false">
+
+    Return a clear `401 Unauthorized` response when a token expires, and guide the client to refresh or re-authenticate rather than retrying forever.
+
+  </Expandable>
+</ExpandableGroup>
+
+## Next steps
+
+After you configure authentication, test one successful request and one rejected request so you can confirm the access rules behave correctly. Then document the exact headers, scopes, and rotation policy your team uses.
+
+<Columns cols={2}>
+  <Card title="Quickstart" icon="book-open" href="/quickstart" horizontal>
+    
+    Set up LambShock in minutes with a working example.
+    
+  </Card>
+  <Card title="Introduction" icon="chevron-right" href="/introduction" horizontal>
+    
+    Review the product overview before you customize auth settings.
+    
+  </Card>
+</Columns>
