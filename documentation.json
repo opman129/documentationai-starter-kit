@@ -48,7 +48,14 @@
               {
                 "title": "Authentication",
                 "path": "authentication",
-                "icon": "lock"
+                "icon": "lock",
+                "openapi": "api-reference/openapi.yaml POST /auth/token",
+                "openapi-mode": "custom"
+              },
+              {
+                "title": "Errors and status codes",
+                "path": "errors",
+                "icon": "alert-triangle"
               },
               {
                 "title": "Configuration",

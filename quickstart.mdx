@@ -1,181 +1,141 @@
 ---
 title: Quickstart
-description: Set up LambShock and complete your first successful workflow in minutes. This guide focuses on the fastest path from zero to working setup.
+description: Get an access token, create a customer, and charge a test card in the sandbox.
 ---
 
-## Overview
+Make your first successful API call in about five minutes. By the end you'll
+have fetched an access token, created a customer, and charged a test card — all
+against the sandbox, so no real money moves.
 
-LambShock helps you move from an empty workspace to a working setup quickly. This starter kit shows the shortest path through prerequisites, setup, first project creation, verification, and a basic workflow you can repeat and customize.
+## Before you start
 
-<Callout kind="info">
+You need:
 
-This page is a starter kit template. Replace the sample names, endpoints, and workflow steps with details from your own product.
+- A sandbox account and your test credentials (`client_id` and a
+  `client_secret` that starts with `sk_test_`). Both are on the **Developers →
+  API keys** page of the dashboard.
+- A tool to make HTTP requests — `curl`, the examples below, or the "Try it"
+  playground on this page.
 
-</Callout>
+All sandbox requests go to:
 
-## Prerequisites
-
-Before you begin, make sure you have the basics ready:
-
-- An account or access to your LambShock workspace
-- A recent version of Node.js or another supported runtime
-- Permission to create projects and run test workflows
-- A terminal and text editor available locally
-
-<Columns cols={3}>
-  <Card title="Create Access" icon="users" href="#setup">
-    
-  Start with a workspace or account that has project permissions.
-    
-  </Card>
-  <Card title="Prepare Tools" icon="terminal" href="#installation">
-    
-  Install the runtime and command-line tools you will use locally.
-    
-  </Card>
-  <Card title="Verify Output" icon="check-circle" href="#verification">
-    
-  Confirm that your first run completes without errors.
-    
-  </Card>
-</Columns>
-
-## Setup
-
-### Installation
-
-Use the package manager that matches your environment. The commands below are realistic examples you can adapt for your own distribution.
-
-<CodeGroup tabs="npm,yarn,pnpm">
-  ```javascript
-  // package.json
-  {
-    "name": "lambshock-starter",
-    "private": true,
-    "scripts": {
-      "start": "node index.js",
-      "check": "node verify.js"
-    },
-    "dependencies": {
-      "axios": "^1.7.7"
-    }
-  }
-  ```
-  ```bash
-  yarn install
-  ```
-  ```bash
-  pnpm install
-  ```
-</CodeGroup>
-
-### First project setup
-
-Complete your first project setup by creating a config file and adding a simple workflow definition.
-
-<Steps>
-  <Step title="Create a project folder" icon="folder">
-
-  Create a new directory, open it in your editor, and add a config file named `lambshock.config.json`.
-
-  </Step>
-  <Step title="Add environment values" icon="settings">
-
-  Store your local values in a safe place. For example, use `LAMBSHOCK_PROJECT_ID` and `LAMBSHOCK_API_URL` as environment variables.
-
-  </Step>
-  <Step title="Register your workflow" icon="check-circle">
-
-  Define the first workflow in a JSON file so you can run and verify it immediately.
-
-  </Step>
-</Steps>
-
-## Your first workflow
-
-The following example shows a minimal workflow that sends a request, checks the response, and writes a simple success message. Use it as a template for your own process.
-
-```javascript
-import axios from "axios";
-
-async function runWorkflow() {
-  const response = await axios.post("https://api.example.com/workflows/run", {
-    projectId: "proj_1024",
-    source: "quickstart",
-    dryRun: false
-  });
-
-  if (response.status === 200) {
-    console.log("Workflow completed successfully");
-  } else {
-    console.error("Workflow failed", response.status);
-  }
-}
-
-runWorkflow().catch((error) => {
-  console.error("Unexpected error", error.message);
-});
+```
+https://sandbox.example-pay.com/v1
 ```
 
-<Tabs>
-  <Tab title="Local" icon="terminal">
+Amounts are always an integer in the currency's **minor unit**. `2000` with
+currency `USD` means $20.00.
 
-  Run the workflow from your computer while you are testing the setup.
+## 1. Get an access token
 
-  ```bash
-  node index.js
-  ```
+Exchange your credentials for a short-lived bearer token.
 
-  </Tab>
-  <Tab title="Staging" icon="cloud">
+```bash
+curl https://sandbox.example-pay.com/v1/auth/token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "grant_type": "client_credentials",
+    "client_id": "YOUR_CLIENT_ID",
+    "client_secret": "sk_test_YOUR_SECRET",
+    "scope": "payments.write customers.write"
+  }'
+```
 
-  Use a staging environment to confirm that your workflow reaches your backend safely.
+The response contains the token and how long it lasts (one hour):
 
-  ```bash
-  npm run check
-  ```
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.sig",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "scope": "payments.write customers.write"
+}
+```
 
-  </Tab>
-  <Tab title="Production" icon="rocket">
+Copy the `access_token`. You'll send it on every other request. Full details,
+including scopes and token lifetime, are in the [Authentication](/authentication)
+guide.
 
-  After verification, connect the same workflow to your production settings.
+## 2. Make your first call: create a customer
 
-  ```bash
-  node index.js --env production
-  ```
+Send the token as a bearer token in the `Authorization` header.
 
-  </Tab>
-</Tabs>
+```bash
+curl https://sandbox.example-pay.com/v1/customers \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "ada@example.com",
+    "name": "Ada Lovelace",
+    "address": { "line1": "12 Marina Road", "city": "Lagos", "country": "NG" }
+  }'
+```
 
-## Verification
+A `201 Created` response returns the new customer and its `id`:
 
-Use the checklist below to confirm that your setup is working as expected.
+```json
+{
+  "id": "cus_8sJk2Pq1mN",
+  "object": "customer",
+  "email": "ada@example.com",
+  "name": "Ada Lovelace",
+  "livemode": false,
+  "created": "2026-11-05T09:30:00Z"
+}
+```
 
-1. Your project file exists and loads without syntax errors.
-2. The workflow request returns a successful HTTP response.
-3. Your console shows the confirmation message.
-4. The environment values resolve correctly in your shell.
-5. You can repeat the run without changing the setup.
+## 3. Charge a test card
 
-<Callout kind="tip">
+Create a payment for the customer using the test card `4242 4242 4242 4242`,
+which always succeeds in the sandbox.
 
-If the request fails, check the endpoint URL, project identifier, and local environment values before you retry.
+```bash
+curl https://sandbox.example-pay.com/v1/payments \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": { "value": 2000, "currency": "USD" },
+    "customer_id": "cus_8sJk2Pq1mN",
+    "payment_method": {
+      "type": "card",
+      "card": { "number": "4242424242424242", "exp_month": 12, "exp_year": 2030, "cvc": "123" }
+    },
+    "description": "Order #1138"
+  }'
+```
 
-</Callout>
+The payment comes back `succeeded`:
+
+```json
+{
+  "id": "pay_3Nf2kL9aZ",
+  "object": "payment",
+  "amount": { "value": 2000, "currency": "USD" },
+  "status": "succeeded",
+  "customer_id": "cus_8sJk2Pq1mN",
+  "description": "Order #1138",
+  "capture_method": "automatic",
+  "livemode": false,
+  "created": "2026-11-05T09:31:12Z"
+}
+```
+
+That's a full charge, start to finish.
+
+## Test cards
+
+| Card number | Behaviour |
+| --- | --- |
+| 4242 4242 4242 4242 | Succeeds |
+| 4000 0000 0000 0002 | Declined (`card_declined`) |
+| 4000 0000 0000 9995 | Declined (`insufficient_funds`) |
 
 ## Next steps
 
-Once the quickstart works, expand the same pattern into your real project. You can add more validation, route results to another service, or split the workflow into smaller steps.
-
-<Columns cols={2}>
-  <Card title="Configuration" icon="settings" href="/configuration" horizontal>
-    
-  Learn how to customize LambShock settings for different environments.
-    
-  </Card>
-  <Card title="Authentication" icon="lock" href="/authentication" horizontal>
-    
-  Set up secure access and manage tokens or API keys.
-    
-  </Card>
-</Columns>
+- Authorize now and capture later with `capture_method: manual` — see the
+  payments reference.
+- Return funds with the refunds endpoints.
+- Read the [Authentication](/authentication) guide for scopes, API keys,
+  and token lifetime.
+- Read [Errors and status codes](/errors) before you ship, so your
+  integration handles declines and rate limits cleanly.

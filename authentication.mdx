@@ -1,186 +1,124 @@
 ---
 title: Authentication
-description: Configure secure access for users, apps, or API clients. This page explains the supported auth methods and how to apply them correctly.
+description: Client-credentials tokens, token lifetime, scopes, test and live keys, and API key auth.
 ---
 
-## Overview
+Every request to the Acme Payments API — except the token endpoint itself —
+must be authenticated, either with a short-lived bearer token or, for trusted
+server-to-server jobs, an API key. This guide covers how to get a token, how to
+use it, how scopes work, and how to keep your credentials safe.
 
-LambShock supports multiple authentication patterns so you can protect APIs, web apps, and background jobs with the right level of access. Use API keys for server-to-server requests, OAuth for delegated user access, and session-based authentication for browser flows.
+## How it works
 
-This starter kit page gives you a practical baseline. Adapt the examples to match your own identity provider, token format, and permission model.
+Authentication uses the OAuth 2.0 **client-credentials** grant:
 
-<Callout kind="info">
+1. You hold a `client_id` and a `client_secret` (your API keys).
+2. You exchange them at `POST /auth/token` for an `access_token`.
+3. You send that token as a bearer token on every other request.
+4. The token expires after one hour; when it does, you request a new one.
 
-Keep secrets out of source control. Store credentials in environment variables or a managed secret store, not in your app code.
+Your `client_secret` is the sensitive half. Treat it like a password: keep it
+server-side, never commit it, and never put it in client-side code or a URL.
 
-</Callout>
+## Get a token
 
-## Authentication methods
+Send your credentials to the token endpoint. Request only the scopes you need.
 
-Use the method that matches your client type and trust boundary. Server-side apps usually use API keys or service tokens, while user-facing apps often use OAuth or session cookies.
+```bash
+curl https://sandbox.example-pay.com/v1/auth/token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "grant_type": "client_credentials",
+    "client_id": "YOUR_CLIENT_ID",
+    "client_secret": "sk_test_YOUR_SECRET",
+    "scope": "payments.write customers.read"
+  }'
+```
 
-<Columns cols={3}>
-  <Card title="API Keys" icon="lock" href="#api-keys">
-    
-    Best for machine-to-machine access and simple service integration.
-    
-  </Card>
-  <Card title="OAuth" icon="users" href="#oauth-and-sessions">
-    
-    Best for delegated user access with consent and scoped permissions.
-    
-  </Card>
-  <Card title="Permissions" icon="shield" href="#permissions-and-scopes">
-    
-    Best for limiting what each token can read or change.
-    
-  </Card>
-</Columns>
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.sig",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "scope": "payments.write customers.read"
+}
+```
 
-### API keys
+## Use the token
 
-API keys identify your application when you make requests from a trusted backend. Send the key in a header, not in the URL, and rotate it regularly.
+Put the token in the `Authorization` header, prefixed with `Bearer`:
 
-### OAuth and sessions
+```bash
+curl https://sandbox.example-pay.com/v1/payments \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
 
-OAuth lets users authorize access without sharing their password. Session authentication is common in browser apps where the server stores the login state and the client sends a cookie automatically.
+A missing, malformed, or expired token returns `401 Unauthorized`:
 
-## Implementation examples
+```json
+{
+  "error": {
+    "type": "authentication_error",
+    "code": "token_expired",
+    "message": "The access token has expired.",
+    "doc_url": "https://docs.example-pay.com/errors/token_expired"
+  }
+}
+```
 
-The following examples show a typical request pattern for each approach. Replace endpoint paths and claims with the values used in your own system.
+## Token lifetime
 
-<CodeGroup tabs="JavaScript,Python,cURL">
-  ```javascript
-  const response = await fetch("https://api.example.com/v1/account", {
-    headers: {
-      Authorization: "Bearer YOUR_API_KEY",
-      "Content-Type": "application/json"
-    }
-  });
+Tokens last **3600 seconds (one hour)**, as given by `expires_in`. There is no
+refresh token — when a token expires, request a new one from `/auth/token` with
+the same credentials. In practice, cache a token and reuse it until shortly
+before it expires, rather than fetching one per request.
 
-  const data = await response.json();
-  console.log(data);
-  ```
-  ```python
-  import requests
+## Scopes
 
-  response = requests.get(
-      "https://api.example.com/v1/account",
-      headers={
-          "Authorization": "Bearer YOUR_API_KEY",
-          "Content-Type": "application/json"
-      },
-      timeout=30
-  )
+Request the narrowest set of scopes your integration needs. A token can only
+perform actions covered by its scopes; anything else returns `403`.
 
-  print(response.json())
-  ```
-  ```bash
-  curl https://api.example.com/v1/account \
-    -H "Authorization: Bearer YOUR_API_KEY" \
-    -H "Content-Type: application/json"
-  ```
-</CodeGroup>
+| Scope | Grants |
+| --- | --- |
+| `payments.read` | Read payments and refunds |
+| `payments.write` | Create and capture payments, create refunds |
+| `customers.read` | Read customers and payment methods |
+| `customers.write` | Create and update customers and payment methods |
 
-<Steps>
-  <Step title="Create credentials" icon="download">
-    
-    Create a dedicated API key or OAuth client for each environment, such as development, staging, and production.
-    
-  </Step>
-  <Step title="Store secrets securely" icon="settings">
-    
-    Save the credential in an environment variable like `LAMBSHOCK_API_KEY` or in your deployment platform's secret manager.
-    
-  </Step>
-  <Step title="Attach the token to requests" icon="code">
-    
-    Add an `Authorization` header with the correct scheme for your auth method, such as `Bearer YOUR_API_KEY`.
-    
-  </Step>
-  <Step title="Verify access" icon="check-circle">
-    
-    Confirm that the request succeeds, then test a denied request to make sure your permission rules work as expected.
-    
-  </Step>
-</Steps>
+## Test vs. live keys
 
-## Permissions and scopes
+Your account has two key pairs:
 
-Scopes define what a token can do. Use narrow scopes for production and broader scopes only in controlled environments.
+- **Test keys** (`sk_test_…`) run against the sandbox. No real money moves, and
+  responses have `"livemode": false`.
+- **Live keys** (`sk_live_…`) run against production.
 
-| Scope | Typical access | Example use |
-|------|----------------|-------------|
-| `read:account` | View profile and account data | Display dashboard details |
-| `write:account` | Update account data | Save profile changes |
-| `read:billing` | View billing information | Show invoices |
-| `admin:users` | Manage users and roles | Invite teammates |
+Keep them separate per environment. A common setup is to read the key from an
+environment variable so the same code runs in both.
 
-A token with `read:account` should not be able to modify records. If you need a broader permission, create a separate token instead of expanding every key.
+## API keys for server-to-server calls
 
-## Environment variables
+For simple back-office scripts you can authenticate with a secret key directly,
+sent in the `X-API-Key` header, instead of fetching a token:
 
-Environment variables help you keep credentials out of code and make deployment easier across environments.
+```bash
+curl https://sandbox.example-pay.com/v1/customers \
+  -H "X-API-Key: sk_test_YOUR_SECRET"
+```
 
-<CodeGroup tabs="macOS/Linux,Windows">
-  ```bash
-  export LAMBSHOCK_API_KEY="YOUR_API_KEY"
-  export LAMBSHOCK_AUTH_URL="https://auth.example.com"
-  ```
-  ```powershell
-  setx LAMBSHOCK_API_KEY "YOUR_API_KEY"
-  setx LAMBSHOCK_AUTH_URL "https://auth.example.com"
-  ```
-</CodeGroup>
+Bearer tokens are preferred for application traffic because they're short-lived
+and scoped; reserve raw API-key auth for trusted internal jobs.
 
-## Security best practices
+## Keep credentials safe
 
-<Callout kind="alert">
-
-Never log raw secrets, never commit credentials to a repository, and never expose long-lived tokens in browser code.
-
-</Callout>
-
-- Use short-lived tokens when possible.
-- Rotate credentials on a fixed schedule.
-- Separate keys by environment and service.
-- Enforce the minimum scope needed for each client.
-- Revoke unused credentials immediately.
-- Audit failed login attempts and unusual token use.
-
-## Advanced scenarios
-
-<ExpandableGroup>
-  <Expandable title="Using session cookies in a browser app" default-open="true">
-
-    If you use sessions, mark cookies as `HttpOnly`, `Secure`, and `SameSite=Lax` or stricter. This helps reduce exposure to client-side scripts and cross-site attacks.
-
-  </Expandable>
-  <Expandable title="Mixing OAuth with backend API calls" default-open="false">
-
-    Let the browser obtain a user token, then pass that token to your backend only when the backend must act on behalf of the user. Keep service credentials separate from user credentials.
-
-  </Expandable>
-  <Expandable title="Handling expired credentials" default-open="false">
-
-    Return a clear `401 Unauthorized` response when a token expires, and guide the client to refresh or re-authenticate rather than retrying forever.
-
-  </Expandable>
-</ExpandableGroup>
+- Store secrets in a secrets manager or environment variables, never in source
+  control.
+- Rotate keys if one may have leaked; you can roll keys from the dashboard.
+- Scope tokens tightly and set short lifetimes.
+- Never send a secret in a query string or expose it in browser code.
 
 ## Next steps
 
-After you configure authentication, test one successful request and one rejected request so you can confirm the access rules behave correctly. Then document the exact headers, scopes, and rotation policy your team uses.
-
-<Columns cols={2}>
-  <Card title="Quickstart" icon="book-open" href="/quickstart" horizontal>
-    
-    Set up LambShock in minutes with a working example.
-    
-  </Card>
-  <Card title="Introduction" icon="chevron-right" href="/introduction" horizontal>
-    
-    Review the product overview before you customize auth settings.
-    
-  </Card>
-</Columns>
+- [Quickstart](/quickstart) — your first authenticated call.
+- [Errors and status codes](/errors) — how auth failures and other errors
+  are reported.
